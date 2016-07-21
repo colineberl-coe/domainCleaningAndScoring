@@ -19,7 +19,7 @@ cleanColNames <- function (x){
 cleanDomainNAs <- function(x){return( as.data.frame(x) %>% filter( !is.na( domain ) ) )}
 cleanDataTypes <- function(x){return( map_at(.x = x, .at=2:ncol(x), .f=as.numeric) %>% data.frame)}
 # Cleaning the Excel sheets to data.frames --------------------
-filepath = paste0(getwd(),"/jandata.xlsx")
+filepath = paste0(getwd(),"/jan2016report.xlsx")
 sheets <- readxl::excel_sheets(filepath)
 #Create a list of dataframes from the list of sheet names, minus the last sheet which requires some tidyr-ing
 dfs <- llply(.data = sheets[-length(sheets)], .fun=listify) %>% 
