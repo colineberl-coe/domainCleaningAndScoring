@@ -12,13 +12,28 @@ rm(list.of.packages,new.packages)
 #The following option increases the memory allocation for loading Excel file
 options( java.parameters = "-Xmx4g" )
 # Functions to be used --------------------
-listify <- function(x){readxl::read_excel(path = filepath, sheet = x, col_names = T)}
+listify <- function(x){
+  #This function reads the Excel workbook, storing each sheet as a data.frame
+  readxl::read_excel(path = filepath, sheet = x, col_names = T)
+}
 cleanColNames <- function (x){
-    colnames(x) <- c("domain",colnames(x)[2:ncol(x)])
-    return(x)
-  }
-cleanDomainNAs <- function(x){return( as.data.frame(x) %>% filter( !is.na( domain ) ) )}
-cleanDataTypes <- function(x){return( map_at(.x = x, .at=2:ncol(x), .f=as.numeric) %>% data.frame)}
+  #The purpose of this function is to keep all column names, but set "domain"
+  #as the first column name in all sheets, for later reference.
+  colnames(x) <- c("domain",colnames(x)[2:ncol(x)])
+  return(x)
+}
+cleanDomainNAs <- function(x){
+  #This function gets rid of the empty rows that were erroneously imported by readxl;
+  #Those rows were imported as rows of entire NAs, so filter where first column != NA
+  y <- as.data.frame(x) %>% filter( !is.na( domain ) ) 
+  return(y)
+}
+cleanDataTypes <- function(x){
+  #Because of the few "Data Not Found" entries in the spreadsheet, the ostensible numeric
+  #rows are imported as characters. Fix this in the non-name columns, return as data.frame
+  y <- map_at(.x = x, .at=2:ncol(x), .f=as.numeric) %>% data.frame
+  return(y)
+}
 # Cleaning the Excel sheets to data.frames --------------------
 filepath = paste0(getwd(),"/jan2016report.xlsx")
 sheets <- readxl::excel_sheets(filepath)
@@ -56,10 +71,10 @@ features <- cbind(rowSums(multiplicand) %>% unname, sapply( multipliers, functio
   mutate(.,p = d/X1) %>%
   rename(c("domain" = "domain","X1" = "total_visits", "X2"="pages_per_visit", "X3"="avg_visit_duration","X4" = "bounce_rate", "d" = "desktop_visits","X2016.01" = "global_rank","p"="desktop_percent"))
 # Formatting target variable from csv ----------
-y <- read.csv( file= paste0(getwd(), "/revenue.csv") )
-y <- lapply(y, function(x){str_replace(x,"www.","")}) %>% 
-  map_at(2,as.numeric) %>% 
-  map_at(1,factor) %>%
+y <- read.csv( file= paste0(getwd(), "/revenue.csv") ) %>%
+  map_at(.,1,function(x){factor(str_trim(str_replace(x,"www.",""), "both"))}) %>%
   data.frame
+#There are some duplicated sites in the revenue .csv, so get the unique then merge 
+full_data <- merge(features, y[unique(y$domain),], by=intersect(names(features),names(y)) )
 # Write the cleaned data to a .csv ----------
 write.csv(features, file = "training_data.csv",row.names=F)
