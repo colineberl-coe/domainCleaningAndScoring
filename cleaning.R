@@ -1,4 +1,5 @@
-#This is a script to define the functions that take the input data and clean it for model building
+#This is a script that takes the input data from excel and cleans it for model building, 
+#outputting a .csv to be passed to Python
 # Install packages and mask functions --------------------
 rm(list=ls())
 list.of.packages <- c("plyr","dplyr","purrr","readxl","reshape","stringr","tidyr")
